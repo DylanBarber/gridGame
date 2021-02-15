@@ -17,6 +17,9 @@ class Inputs extends Component {
                 <label for="directions">Robot Directions</label>
                 <input type="text" name="directions"></input>
 
+                <label for="timeBetweenMovements">Time between movements (In Milliseconds)</label>
+                <input type="text" name="timeBetweenMovements"></input>
+
                 <button type="submit">Submit</button>
             </form>
         )

@@ -11,22 +11,27 @@ class Grid extends Component {
             gridSize: this.props.gridSize,
             startPosition: null,
             currentPosition: null,
-            doneMoving: false,
+            directions: null,
+            lost: false,
         }
-
     }
 
-    componentDidMount() {
+    startGame() {
         const grid = Array.from({ length: this.state.gridSize.y }, () => (Array.from({ length: this.state.gridSize.x }, () => ({ active: false, direction: null }))));
 
         this.setState(
             {
                 grid,
-                startPosition: this.getStartPositionObj(this.props.startPosition)
+                startPosition: this.getStartPositionObj(this.props.startPosition),
+                directions: this.props.directions
             }, () => {
                 this.setStartPosition();
             }
         );
+    }
+
+    componentDidMount() {
+        this.startGame();
     }
 
     getStartPositionObj() {
@@ -69,86 +74,96 @@ class Grid extends Component {
 
         const { startPosition } = this.state;
 
-        updatedGrid[startPosition.x][startPosition.y] = {active: true, direction: startPosition.direction}
+        //Placing the robot on the correct cell in the grid
+        updatedGrid[startPosition.y][startPosition.x] = { active: true, direction: startPosition.direction }
 
-        this.setState(
-            {
-                grid: updatedGrid,
-                currentPosition: startPosition
-            }
-        )
+        // Doing a set timeout so the end user can actually see the movements in play
+            this.setState(
+                {
+                    grid: updatedGrid,
+                    currentPosition: startPosition
+                }
+                , () => setTimeout(() => this.moveRobot(), this.props.timeBetweenMovements))
     }
 
     moveRobot() {
-        
         const { directions } = this.state;
+        let counter = 0;
+
 
         const moveAndDelay = movement => {
-            //Deep copying grid from state
-            const { currentPosition, grid, gridSize } = this.state
+            if (counter < directions.length) {
+                movement = directions.charAt(counter);
+                //Deep copying grid from state
+                const { currentPosition, grid, gridSize } = this.state
 
-            const updatedGrid = JSON.parse(JSON.stringify(grid));
+                const updatedGrid = JSON.parse(JSON.stringify(grid));
 
-            const newPosition = {
-                x: currentPosition.x,
-                y: currentPosition.y,
-                direction: currentPosition.direction
-            }
-
-            if (movement === 'F') {
-                switch (currentPosition.direction) {
-                    case 0:
-                        newPosition.y = currentPosition.y - 1
-                        break;
-                    case 1:
-                        newPosition.x = currentPosition.x + 1
-                        break;
-                    case 2:
-                        newPosition.y = currentPosition.y + 1
-                        break;
-                    case 3:
-                        newPosition.x = currentPosition.x - 1
-                        break;
-                    default:
-                        throw new Error('Expected direction to be 0-3')
+                const newPosition = {
+                    x: currentPosition.x,
+                    y: currentPosition.y,
+                    direction: currentPosition.direction
                 }
-            } else {
-                if (movement === 'R' && currentPosition.direction !== 3) {
-                    newPosition.direction = currentPosition.direction + 1;
-                } else if (movement === 'R' && currentPosition.direction === 3) {
-                    newPosition.direction = 0;
-                }
-        
-                if (movement === 'L' && currentPosition.direction !== 0) {
-                    newPosition.direction = currentPosition.direction - 1;
-                } else if (movement === 'L' && currentPosition.direction === 0) {
-                    newPosition.direction = 3;
-                }
-            }
-        
-            if (newPosition.x > (gridSize.x - 1) ||
-                newPosition.x < 0 ||
-                newPosition.y > (gridSize.y - 1) ||
-                newPosition.y < 0) {
-                console.log(`LOST ${currentPosition.x + 1} ${currentPosition.y + 1}`);
-            } else {
-                console.log(newPosition);
-        
-        
-                updatedGrid[currentPosition.y][currentPosition.x] = { active: false, direction: null }
-                updatedGrid[newPosition.y][newPosition.x] = { active: true, direction: newPosition.direction }
 
-                setTimeout(() => {
+                if (movement === 'F') {
+                    switch (currentPosition.direction) {
+                        case 0:
+                            newPosition.y = currentPosition.y + 1
+                            break;
+                        case 1:
+                            newPosition.x = currentPosition.x + 1
+                            break;
+                        case 2:
+                            newPosition.y = currentPosition.y - 1
+                            break;
+                        case 3:
+                            newPosition.x = currentPosition.x - 1
+                            break;
+                        default:
+                            throw new Error('Expected direction to be 0-3')
+                    }
+                } else {
+                    if (movement === 'R' && currentPosition.direction !== 3) {
+                        newPosition.direction = currentPosition.direction + 1;
+                    } else if (movement === 'R' && currentPosition.direction === 3) {
+                        newPosition.direction = 0;
+                    }
+
+                    if (movement === 'L' && currentPosition.direction !== 0) {
+                        newPosition.direction = currentPosition.direction - 1;
+                    } else if (movement === 'L' && currentPosition.direction === 0) {
+                        newPosition.direction = 3;
+                    }
+                }
+
+                if (newPosition.x > (gridSize.x - 1) ||
+                    newPosition.x < 0 ||
+                    newPosition.y > (gridSize.y - 1) ||
+                    newPosition.y < 0) {
+
                     this.setState({
-                        grid: updatedGrid,
-                        currentPosition: newPosition
-                    });
-                }, 2000)
-            }
+                        lost: true,
+                    })
+                } else {
 
+                    updatedGrid[currentPosition.y][currentPosition.x] = { active: false, direction: null }
+                    updatedGrid[newPosition.y][newPosition.x] = { active: true, direction: newPosition.direction }
+                    
+                    // Doing a set timeout so the end user can actually see the movements in play
+                    setTimeout(() => {
+                        this.setState({
+                            grid: updatedGrid,
+                            currentPosition: newPosition
+                        });
+                        counter += 1;
+                        moveAndDelay();
+                    }, this.props.timeBetweenMovements)
+                }
+            }
         }
 
-        
+        moveAndDelay();
+
     }
 
     render() {
@@ -175,7 +190,7 @@ class Grid extends Component {
                                     throw new Error('Expected a direction (0-3)');
                             }
                         } else {
-                            return <div><h1 className="gridCell">O</h1></div>
+                            return <div className="gridCell"></div>
                         }
                     })}
                 </div>
@@ -183,9 +198,13 @@ class Grid extends Component {
         })
 
         return (
-            <div className="gridContainer">
-                {gridDisplay}
-            </div>
+            <>
+                {this.state.lost ? <h1>LOST AT {this.state.currentPosition.x} {this.state.currentPosition.y}</h1> : null}
+
+                <div className="gridContainer">
+                    {gridDisplay}
+                </div>
+            </>
         )
     }
 }

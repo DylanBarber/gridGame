@@ -1,17 +1,29 @@
 .gridRow {
     margin: 0px;
+    display: flex;
 }
 .gridContainer {
     display: flex;
     margin: 0px;
+    flex-direction: column-reverse;
 }
 .gridCell {
-    margin: 0px;
-    margin-left: 19px;
+    margin: 2px;
+    width: 10px;
+    height: 10px;
+    background-color: lightgreen;
+    border-radius: 100%;
+}
+
+.upArrow, .rightArrow, .downArrow, .leftArrow {
+    width: 10px;
+    height: 10px;
+    margin: 2px;
 }
 
 .upArrow {
     transform: rotate(270deg);
+
 }
 
 .rightArrow {
