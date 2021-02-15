@@ -5,6 +5,9 @@ form {
     text-align: center;
     background-color: lightgrey;
     width: 300px;
+    margin: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 30px black;
 }
 
 input {

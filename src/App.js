@@ -16,7 +16,8 @@ class App extends Component {
       },
       startPosition: '0 0 N',
       directions: '',
-      key: 0
+      key: 0,
+      sizeValidationError: false
     }
 
     this.onFormSubmit = this.onFormSubmit.bind(this);
@@ -34,15 +35,25 @@ class App extends Component {
     const directions = formData.target[2].value;
     const timeBetweenMovements = parseInt(formData.target[3].value);
 
-    this.setState({
-      gridSize,
-      startPosition,
-      directions,
-      gameStarted: true,
-      timeBetweenMovements,
-      // I use key here because I need to remount <Grid /> whenever the input values are changed. Changing the key of a react component remounts it
-      key: this.state.key + 1
-    })
+    const startPositionSplit = startPosition.split(' ');
+
+    if (gridSize.x > 50 || gridSize.y > 50 || startPositionSplit[0] > 50 || startPositionSplit[1] > 50) {
+      this.setState({
+        sizeValidationError: true
+      });
+    } else {
+      this.setState({
+        gridSize,
+        startPosition,
+        directions,
+        gameStarted: true,
+        timeBetweenMovements,
+        // I use key here because I need to remount <Grid /> whenever the input values are changed. Changing the key of a react component remounts it
+        key: this.state.key + 1,
+        sizeValidationError: false
+      })
+    }
+
   }
 
   render() {
@@ -56,16 +67,14 @@ class App extends Component {
     />
 
     return (
-      <>
-        <div className="inputsContainer">
+        <div className="appContainer">
+          {this.state.sizeValidationError ? <h1 className="validationError">Grid Size or Coordinates Cannot Be Over 50</h1>: null}
           <Inputs onSubmit={() => this.onFormSubmit} />
           {this.state.gameStarted ? grid
             :
             null}
 
         </div>
-
-      </>
     );
   }
 
